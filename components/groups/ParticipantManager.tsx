@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Participant } from '@/lib/types';
 import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import {Button} from '@/components/ui/Button';
 import { UserPlus, Trash2 } from 'lucide-react';
 import { generateColor } from '@/lib/utils';
 

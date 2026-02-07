@@ -2,7 +2,7 @@
 
 import { Group } from '@/lib/types';
 import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
+import {Button} from '@/components/ui/Button';
 import { Users, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
