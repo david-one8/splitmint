@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Sparkles, Send } from 'lucide-react';
 import Input from './ui/Input';
-import Button from './ui/Button';
+import {Button} from './ui/Button';
 import Card from './ui/Card';
 
 interface AIAssistantProps {
