@@ -1,6 +1,17 @@
-// Build version 2.0 - Fixed amount type errors
+// Build version 3.0 - Type-safe expense routes
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+
+interface ExpenseRequest {
+  group_id?: string;
+  id?: string;
+  description: string;
+  amount: number | string;
+  payer_id: string;
+  date: string;
+  split_mode: 'equal' | 'percentage' | 'custom';
+  splits: Record<string, number | string>;
+}
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -10,7 +21,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { group_id, description, amount, payer_id, date, split_mode, splits } = await request.json();
+  const body: ExpenseRequest = await request.json();
+  const { group_id, description, amount, payer_id, date, split_mode, splits } = body;
+
   const totalAmount = Number(amount);
 
   const { data: expense, error: expenseError } = await supabase
@@ -33,12 +46,15 @@ export async function POST(request: Request) {
 
   const splitRecords = Object.entries(splits).map(([participant_id, splitAmount]) => {
     const amountNum = Number(splitAmount);
-    
+
     return {
       expense_id: expense.id,
       participant_id,
       amount: amountNum,
-      percentage: split_mode === 'percentage' ? (amountNum / totalAmount) * 100 : null,
+      percentage:
+        split_mode === 'percentage' && totalAmount > 0
+          ? (amountNum / totalAmount) * 100
+          : null,
     };
   });
 
@@ -62,7 +78,9 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id, description, amount, payer_id, date, split_mode, splits } = await request.json();
+  const body: ExpenseRequest = await request.json();
+  const { id, description, amount, payer_id, date, split_mode, splits } = body;
+
   const totalAmount = Number(amount);
 
   const { error: expenseError } = await supabase
@@ -78,12 +96,15 @@ export async function PUT(request: Request) {
 
   const splitRecords = Object.entries(splits).map(([participant_id, splitAmount]) => {
     const amountNum = Number(splitAmount);
-    
+
     return {
       expense_id: id,
       participant_id,
       amount: amountNum,
-      percentage: split_mode === 'percentage' ? (amountNum / totalAmount) * 100 : null,
+      percentage:
+        split_mode === 'percentage' && totalAmount > 0
+          ? (amountNum / totalAmount) * 100
+          : null,
     };
   });
 
@@ -109,7 +130,10 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
-  const { error } = await supabase.from('expenses').delete().eq('id', id);
+  const { error } = await supabase
+    .from('expenses')
+    .delete()
+    .eq('id', id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
