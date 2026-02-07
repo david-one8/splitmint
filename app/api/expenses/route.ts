@@ -29,12 +29,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: expenseError.message }, { status: 500 });
   }
 
-  const splitRecords = Object.entries(splits).map(([participant_id, amount]) => ({
-    expense_id: expense.id,
-    participant_id,
-    amount: amount as number,
-    percentage: split_mode === 'percentage' ? (amount as number / expense.amount) * 100 : null,
-  }));
+  const splitRecords = Object.entries(splits).map(([participant_id, splitAmount]) => {
+    const amountValue = typeof splitAmount === 'number' ? splitAmount : parseFloat(String(splitAmount));
+    
+    return {
+      expense_id: expense.id,
+      participant_id,
+      amount: amountValue,
+      percentage: split_mode === 'percentage' ? (amountValue / expense.amount) * 100 : null,
+    };
+  });
 
   const { error: splitsError } = await supabase
     .from('expense_splits')
@@ -69,12 +73,16 @@ export async function PUT(request: Request) {
 
   await supabase.from('expense_splits').delete().eq('expense_id', id);
 
-  const splitRecords = Object.entries(splits).map(([participant_id, amount]) => ({
-    expense_id: id,
-    participant_id,
-    amount: amount as number,
-    percentage: split_mode === 'percentage' ? (amount as number / amount) * 100 : null,
-  }));
+  const splitRecords = Object.entries(splits).map(([participant_id, splitAmount]) => {
+    const amountValue = typeof splitAmount === 'number' ? splitAmount : parseFloat(String(splitAmount));
+    
+    return {
+      expense_id: id,
+      participant_id,
+      amount: amountValue,
+      percentage: split_mode === 'percentage' ? (amountValue / amount) * 100 : null,
+    };
+  });
 
   const { error: splitsError } = await supabase
     .from('expense_splits')
