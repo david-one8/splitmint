@@ -1,56 +1,62 @@
-import { NextResponse } from 'next/server';
-import { parseExpenseFromText, generateGroupSummary, suggestSettlement } from '@/lib/ai/gemini';
+import { NextRequest, NextResponse } from 'next/server';
+import { parseExpenseFromText } from '@/lib/ai/gemini';
 import { createClient } from '@/lib/supabase/server';
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { action, text, groupId, participants, expenses, balances, settlements } = await request.json();
-
+export async function POST(request: NextRequest) {
   try {
+    const { action, text, groupId } = await request.json();
+
     if (action === 'parseExpense') {
+      const supabase = await createClient();
+      
       const { data: participantData } = await supabase
         .from('participants')
         .select('*')
         .eq('group_id', groupId);
 
-      const participantNames = participantData?.map(p => p.name) || [];
+      if (!participantData || participantData.length === 0) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'No participants found for this group' 
+        });
+      }
+
+      const participantNames = participantData.map(p => p.name);
       const result = await parseExpenseFromText(text, participantNames);
 
       if (result) {
-        const payer = participantData?.find(p => p.name === result.payer || result.description.toLowerCase().includes(p.name.toLowerCase()));
+        // Type-safe payer lookup
+        const resultWithPayer = result as typeof result & { payer?: string };
+        const payer = participantData?.find(p => 
+          (resultWithPayer.payer && p.name === resultWithPayer.payer) || 
+          result.description.toLowerCase().includes(p.name.toLowerCase())
+        );
         
         return NextResponse.json({
           success: true,
           expense: {
-            ...result,
-            group_id: groupId,
-            payer_id: payer?.id || participantData?.[0]?.id,
+            description: result.description,
+            amount: result.amount,
+            date: result.date,
+            payer_id: payer?.id || participantData[0].id,
+            participants: result.participants || participantNames,
+            split_mode: result.splitMode || 'equal',
           },
         });
       }
 
-      return NextResponse.json({ success: false, error: 'Could not parse expense' });
-    }
-
-    if (action === 'generateSummary') {
-      const summary = await generateGroupSummary(groupId, expenses, balances);
-      return NextResponse.json({ success: true, summary });
-    }
-
-    if (action === 'suggestSettlement') {
-      const suggestion = await suggestSettlement(settlements);
-      return NextResponse.json({ success: true, suggestion });
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Could not parse expense. Please try again or add manually.' 
+      });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('AI API Error:', error);
-    return NextResponse.json({ error: 'AI processing failed' }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message || 'Failed to process request' 
+    }, { status: 500 });
   }
 }
