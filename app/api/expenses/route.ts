@@ -1,4 +1,4 @@
-// Build version 3.0 - Type-safe expense routes
+// Build version 4.0 - Fully type-safe expense routes
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
@@ -10,7 +10,7 @@ interface ExpenseRequest {
   payer_id: string;
   date: string;
   split_mode: 'equal' | 'percentage' | 'custom';
-  splits: Record<string, number | string>;
+  splits?: Record<string, number | string>;
 }
 
 export async function POST(request: Request) {
@@ -21,10 +21,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body: ExpenseRequest = await request.json();
-  const { group_id, description, amount, payer_id, date, split_mode, splits } = body;
+  const body = (await request.json()) as ExpenseRequest;
+  const { group_id, description, amount, payer_id, date, split_mode, splits = {} } = body;
 
-  const totalAmount = Number(amount);
+  const totalAmount = Number(amount) || 0;
 
   const { data: expense, error: expenseError } = await supabase
     .from('expenses')
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   }
 
   const splitRecords = Object.entries(splits).map(([participant_id, splitAmount]) => {
-    const amountNum = Number(splitAmount);
+    const amountNum = Number(splitAmount) || 0;
 
     return {
       expense_id: expense.id,
@@ -58,13 +58,15 @@ export async function POST(request: Request) {
     };
   });
 
-  const { error: splitsError } = await supabase
-    .from('expense_splits')
-    .insert(splitRecords);
+  if (splitRecords.length > 0) {
+    const { error: splitsError } = await supabase
+      .from('expense_splits')
+      .insert(splitRecords);
 
-  if (splitsError) {
-    await supabase.from('expenses').delete().eq('id', expense.id);
-    return NextResponse.json({ error: splitsError.message }, { status: 500 });
+    if (splitsError) {
+      await supabase.from('expenses').delete().eq('id', expense.id);
+      return NextResponse.json({ error: splitsError.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ success: true, expense });
@@ -78,14 +80,20 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body: ExpenseRequest = await request.json();
-  const { id, description, amount, payer_id, date, split_mode, splits } = body;
+  const body = (await request.json()) as ExpenseRequest;
+  const { id, description, amount, payer_id, date, split_mode, splits = {} } = body;
 
-  const totalAmount = Number(amount);
+  const totalAmount = Number(amount) || 0;
 
   const { error: expenseError } = await supabase
     .from('expenses')
-    .update({ description, amount: totalAmount, payer_id, date, split_mode })
+    .update({
+      description,
+      amount: totalAmount,
+      payer_id,
+      date,
+      split_mode,
+    })
     .eq('id', id);
 
   if (expenseError) {
@@ -95,7 +103,7 @@ export async function PUT(request: Request) {
   await supabase.from('expense_splits').delete().eq('expense_id', id);
 
   const splitRecords = Object.entries(splits).map(([participant_id, splitAmount]) => {
-    const amountNum = Number(splitAmount);
+    const amountNum = Number(splitAmount) || 0;
 
     return {
       expense_id: id,
@@ -108,12 +116,14 @@ export async function PUT(request: Request) {
     };
   });
 
-  const { error: splitsError } = await supabase
-    .from('expense_splits')
-    .insert(splitRecords);
+  if (splitRecords.length > 0) {
+    const { error: splitsError } = await supabase
+      .from('expense_splits')
+      .insert(splitRecords);
 
-  if (splitsError) {
-    return NextResponse.json({ error: splitsError.message }, { status: 500 });
+    if (splitsError) {
+      return NextResponse.json({ error: splitsError.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ success: true });
@@ -129,6 +139,10 @@ export async function DELETE(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
+
+  if (!id) {
+    return NextResponse.json({ error: 'Expense ID required' }, { status: 400 });
+  }
 
   const { error } = await supabase
     .from('expenses')
