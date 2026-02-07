@@ -39,3 +39,33 @@ body {
 .dark {
   color-scheme: dark;
 }
+
+
+/* Icon visibility fix for light/dark mode */
+svg {
+  @apply text-current;
+}
+
+/* Ensure button icons inherit color */
+button svg,
+a svg {
+  @apply text-current;
+}
+
+/* Button text visibility fix */
+button {
+  color: inherit;
+}
+
+button[class*="bg-primary"] {
+  color: white !important;
+}
+
+button[class*="bg-red"] {
+  color: white !important;
+}
+
+/* Icon visibility in buttons */
+button svg {
+  color: currentColor;
+}
