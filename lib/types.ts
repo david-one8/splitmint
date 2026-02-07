@@ -65,8 +65,11 @@ export interface Settlement {
 
 export interface AIExpenseInput {
   description: string;
-  amount?: number;
-  date?: string;
-  participants?: string[];
-  splitMode?: 'equal' | 'custom' | 'percentage';
+  amount: number;
+  date: string;
+  payer?: string;
+  participants: string[];
+  splitMode: 'equal' | 'custom' | 'percentage';
+  customAmounts?: Record<string, number>;
+  percentages?: Record<string, number>;
 }
