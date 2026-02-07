@@ -25,10 +25,7 @@ export async function POST(request: NextRequest) {
       const result = await parseExpenseFromText(text, participantNames);
 
       if (result) {
-        // Type-safe payer lookup
-        const resultWithPayer = result as typeof result & { payer?: string };
         const payer = participantData?.find(p => 
-          (resultWithPayer.payer && p.name === resultWithPayer.payer) || 
           result.description.toLowerCase().includes(p.name.toLowerCase())
         );
         
