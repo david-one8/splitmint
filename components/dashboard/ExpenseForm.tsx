@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Expense, Participant } from '@/lib/types';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import Button from '@/components/ui/Button';
+import {Button} from '@/components/ui/Button';
 import { BalanceEngine } from '@/lib/balance-engine';
 
 interface ExpenseFormProps {

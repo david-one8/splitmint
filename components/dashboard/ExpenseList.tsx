@@ -3,7 +3,7 @@
 import { Expense, Participant } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
+import {Button} from '@/components/ui/Button';
 import { Edit2, Trash2 } from 'lucide-react';
 
 interface ExpenseListProps {
