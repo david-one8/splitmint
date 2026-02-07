@@ -22,11 +22,17 @@ export default function ParticipantManager({
 }: ParticipantManagerProps) {
   const [newParticipantName, setNewParticipantName] = useState('');
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAdd = () => {
     if (newParticipantName.trim() && participants.length < maxParticipants) {
       onAdd(newParticipantName.trim(), generateColor());
       setNewParticipantName('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAdd();
     }
   };
 
@@ -57,6 +63,7 @@ export default function ParticipantManager({
                 </span>
               </div>
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => onRemove(participant.id)}
@@ -70,18 +77,23 @@ export default function ParticipantManager({
       </div>
 
       {canAddMore && (
-        <form onSubmit={handleAdd} className="flex gap-2">
+        <div className="flex gap-2">
           <Input
             type="text"
             value={newParticipantName}
             onChange={(e) => setNewParticipantName(e.target.value)}
+            onKeyPress={handleKeyPress}
             placeholder="Add participant name"
             className="flex-1"
           />
-          <Button type="submit" disabled={!newParticipantName.trim()}>
+          <Button 
+            type="button" 
+            onClick={handleAdd} 
+            disabled={!newParticipantName.trim()}
+          >
             <UserPlus className="w-5 h-5" />
           </Button>
-        </form>
+        </div>
       )}
       
       {!canAddMore && (
