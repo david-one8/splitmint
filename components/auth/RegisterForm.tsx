@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Input from '@/components/ui/Input';
-import {Button} from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 
 export default function RegisterForm() {
@@ -44,20 +44,9 @@ export default function RegisterForm() {
           return;
         }
 
-        // Create profile manually
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            email: authData.user.email!,
-            full_name: fullName,
-          });
-
-        if (profileError && profileError.code !== '23505') {
-          // Ignore duplicate key errors (23505)
-          console.error('Profile creation error:', profileError);
-        }
-
+        // Profile is created automatically by database trigger
+        // No need to manually create it here
+        
         setSuccess(true);
         setTimeout(() => {
           router.push('/dashboard');
@@ -65,6 +54,7 @@ export default function RegisterForm() {
         }, 1000);
       }
     } catch (err: any) {
+      console.error('Registration error:', err);
       setError(err.message || 'Failed to create account');
       setLoading(false);
     }
@@ -97,14 +87,24 @@ export default function RegisterForm() {
         required
         minLength={6}
       />
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      {success && <p className="text-sm text-green-500">Account created! Redirecting...</p>}
+      {error && (
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
+      {success && (
+        <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-sm text-green-600 dark:text-green-400">
+            ✅ Account created! Redirecting...
+          </p>
+        </div>
+      )}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? 'Creating account...' : 'Sign Up'}
       </Button>
       <p className="text-center text-sm text-gray-600 dark:text-gray-400">
         Already have an account?{' '}
-        <Link href="/login" className="text-primary-600 hover:underline font-medium">
+        <Link href="/login" className="text-primary-600 hover:underline font-medium dark:text-primary-400">
           Sign In
         </Link>
       </p>
