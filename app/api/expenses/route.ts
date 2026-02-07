@@ -10,13 +10,14 @@ export async function POST(request: Request) {
   }
 
   const { group_id, description, amount, payer_id, date, split_mode, splits } = await request.json();
+  const totalAmount = Number(amount);
 
   const { data: expense, error: expenseError } = await supabase
     .from('expenses')
     .insert({
       group_id,
       description,
-      amount,
+      amount: totalAmount,
       payer_id,
       date,
       split_mode,
@@ -30,13 +31,13 @@ export async function POST(request: Request) {
   }
 
   const splitRecords = Object.entries(splits).map(([participant_id, splitAmount]) => {
-    const amountValue = typeof splitAmount === 'number' ? splitAmount : parseFloat(String(splitAmount));
+    const amountNum = Number(splitAmount);
     
     return {
       expense_id: expense.id,
       participant_id,
-      amount: amountValue,
-      percentage: split_mode === 'percentage' ? (amountValue / expense.amount) * 100 : null,
+      amount: amountNum,
+      percentage: split_mode === 'percentage' ? (amountNum / totalAmount) * 100 : null,
     };
   });
 
@@ -61,10 +62,11 @@ export async function PUT(request: Request) {
   }
 
   const { id, description, amount, payer_id, date, split_mode, splits } = await request.json();
+  const totalAmount = Number(amount);
 
   const { error: expenseError } = await supabase
     .from('expenses')
-    .update({ description, amount, payer_id, date, split_mode })
+    .update({ description, amount: totalAmount, payer_id, date, split_mode })
     .eq('id', id);
 
   if (expenseError) {
@@ -74,13 +76,13 @@ export async function PUT(request: Request) {
   await supabase.from('expense_splits').delete().eq('expense_id', id);
 
   const splitRecords = Object.entries(splits).map(([participant_id, splitAmount]) => {
-    const amountValue = typeof splitAmount === 'number' ? splitAmount : parseFloat(String(splitAmount));
+    const amountNum = Number(splitAmount);
     
     return {
       expense_id: id,
       participant_id,
-      amount: amountValue,
-      percentage: split_mode === 'percentage' ? (amountValue / amount) * 100 : null,
+      amount: amountNum,
+      percentage: split_mode === 'percentage' ? (amountNum / totalAmount) * 100 : null,
     };
   });
 
