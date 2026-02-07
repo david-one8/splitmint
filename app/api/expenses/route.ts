@@ -1,3 +1,4 @@
+// Build version 2.0 - Fixed amount type errors
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
