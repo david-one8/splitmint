@@ -43,7 +43,7 @@ export default function AIAssistant({ groupId, participants, onExpenseParsed }: 
         onExpenseParsed(data.expense);
         setInput('');
       } else {
-        setResult('❌ Could not parse expense. Please try again or add manually.');
+        setResult('⚠️⚠️⚠️ Free Quota of Gemini API exceeded. Please add manually.');
       }
     } catch (error) {
       setResult('❌ An error occurred. Please try again.');
