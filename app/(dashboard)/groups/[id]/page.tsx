@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Group, Participant, Expense } from '@/lib/types';
 import { BalanceEngine } from '@/lib/balance-engine';
-import Button from '@/components/ui/Button';
+import {Button} from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Card from '@/components/ui/Card';
 import ParticipantManager from '@/components/groups/ParticipantManager';
@@ -15,7 +16,7 @@ import BalanceTable from '@/components/dashboard/BalanceTable';
 import SummaryCards from '@/components/dashboard/SummaryCards';
 import SearchFilters from '@/components/dashboard/SearchFilters';
 import AIAssistant from '@/components/AIAssistant';
-import { Plus, ArrowLeft, Settings, Trash2 } from 'lucide-react';
+import { Plus, Settings, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 export default function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -31,7 +32,6 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const supabase = createClient();
 
-  // Redirect if trying to access 'new' as an ID
   useEffect(() => {
     if (id === 'new') {
       router.replace('/groups/new');
@@ -187,7 +187,6 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     handleAddExpense(expenseData);
   };
 
-  // Show loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -199,7 +198,6 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  // Show not found state
   if (!group) {
     return (
       <div className="text-center py-16">
@@ -208,7 +206,6 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
           This group doesn't exist or you don't have access to it.
         </p>
         <Button onClick={() => router.push('/dashboard')}>
-          <ArrowLeft className="w-5 h-5 mr-2" />
           Back to Dashboard
         </Button>
       </div>
@@ -225,29 +222,45 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="space-y-6">
+      {/* Updated Header with Back Button */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+        <div className="flex items-center gap-3">
+          <BackButton href="/dashboard" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{group.name}</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+              {group.name}
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
               {participants.length} participant{participants.length !== 1 ? 's' : ''} • {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
-        <div className="flex gap-3 flex-wrap">
-          <Button variant="secondary" onClick={() => setIsParticipantModalOpen(true)}>
-            <Settings className="w-5 h-5 mr-2" />
-            Manage
+        
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
+          <Button 
+            variant="secondary" 
+            size="sm"
+            onClick={() => setIsParticipantModalOpen(true)}
+            className="text-xs sm:text-sm"
+          >
+            <Settings className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Manage</span>
           </Button>
-          <Button onClick={() => { setEditingExpense(null); setIsExpenseModalOpen(true); }}>
-            <Plus className="w-5 h-5 mr-2" />
-            Add Expense
+          <Button 
+            size="sm"
+            onClick={() => { setEditingExpense(null); setIsExpenseModalOpen(true); }}
+            className="text-xs sm:text-sm"
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Add Expense</span>
           </Button>
-          <Button variant="danger" onClick={handleDeleteGroup}>
-            <Trash2 className="w-5 h-5" />
+          <Button 
+            variant="danger" 
+            size="sm"
+            onClick={handleDeleteGroup}
+            className="text-xs sm:text-sm"
+          >
+            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
         </div>
       </div>

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGroups } from '@/hooks/useGroups';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button'; 
+import BackButton from '@/components/ui/BackButton';
 import GroupCard from '@/components/groups/GroupCard';
 import { Plus } from 'lucide-react';
 
@@ -18,7 +19,10 @@ export default function GroupsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Groups</h1>
+        <div className="flex items-center gap-4">
+          <BackButton href="/dashboard" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Groups</h1>
+        </div>
         <Button onClick={() => router.push('/groups/new')}>
           <Plus className="w-5 h-5 mr-2" />
           New Group

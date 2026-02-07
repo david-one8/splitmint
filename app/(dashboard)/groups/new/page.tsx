@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import BackButton from '@/components/ui/BackButton';
 import ParticipantManager from '@/components/groups/ParticipantManager';
-import { ArrowLeft } from 'lucide-react';
 
 interface TempParticipant {
   id: string;
@@ -65,7 +65,6 @@ export default function NewGroupPage() {
         return;
       }
 
-      // Create group
       const { data: group, error: groupError } = await supabase
         .from('groups')
         .insert({ name: groupName, owner_id: user.id })
@@ -74,7 +73,6 @@ export default function NewGroupPage() {
 
       if (groupError) throw groupError;
 
-      // Add participants
       const participantRecords = participants.map(p => ({
         group_id: group.id,
         name: p.name,
@@ -86,12 +84,10 @@ export default function NewGroupPage() {
         .insert(participantRecords);
 
       if (participantsError) {
-        // Rollback group creation
         await supabase.from('groups').delete().eq('id', group.id);
         throw participantsError;
       }
 
-      // Redirect to group detail page
       router.push(`/groups/${group.id}`);
     } catch (err: any) {
       setError(err.message || 'Failed to create group');
@@ -102,9 +98,7 @@ export default function NewGroupPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
+        <BackButton href="/dashboard" />
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create New Group</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
