@@ -31,7 +31,12 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const supabase = createClient();
 
+  // Redirect if trying to access 'new' as an ID
   useEffect(() => {
+    if (id === 'new') {
+      router.replace('/groups/new');
+      return;
+    }
     fetchGroupData();
   }, [id]);
 
@@ -40,6 +45,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   }, [expenses]);
 
   const fetchGroupData = async () => {
+    if (id === 'new') return;
+
     const { data: groupData } = await supabase
       .from('groups')
       .select('*')
@@ -180,12 +187,32 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     handleAddExpense(expenseData);
   };
 
+  // Show loading state
   if (loading) {
-    return <div className="text-center py-16 text-gray-600 dark:text-gray-400">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading group...</p>
+        </div>
+      </div>
+    );
   }
 
+  // Show not found state
   if (!group) {
-    return <div className="text-center py-16 text-gray-600 dark:text-gray-400">Group not found</div>;
+    return (
+      <div className="text-center py-16">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Group not found</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          This group doesn't exist or you don't have access to it.
+        </p>
+        <Button onClick={() => router.push('/dashboard')}>
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back to Dashboard
+        </Button>
+      </div>
+    );
   }
 
   const balanceEngine = new BalanceEngine(participants, expenses);
@@ -198,7 +225,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>
             <ArrowLeft className="w-5 h-5" />
@@ -206,11 +233,11 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{group.name}</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {participants.length} participants • {expenses.length} expenses
+              {participants.length} participant{participants.length !== 1 ? 's' : ''} • {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <Button variant="secondary" onClick={() => setIsParticipantModalOpen(true)}>
             <Settings className="w-5 h-5 mr-2" />
             Manage
@@ -231,7 +258,11 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
             <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
               Add participants to get started
             </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              You need to add at least one participant to start tracking expenses
+            </p>
             <Button onClick={() => setIsParticipantModalOpen(true)}>
+              <Plus className="w-5 h-5 mr-2" />
               Add Participants
             </Button>
           </div>
