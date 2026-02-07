@@ -22,31 +22,51 @@ export default function RegisterForm() {
     setLoading(true);
     setError('');
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      // Sign up user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+      });
 
-    if (signUpError) {
-      setError(signUpError.message);
-      setLoading(false);
-    } else {
-      if (data.user && data.user.identities && data.user.identities.length === 0) {
-        setError('Email already registered. Please sign in.');
-        setLoading(false);
-      } else {
+      if (signUpError) throw signUpError;
+
+      if (authData.user) {
+        // Check if user already exists
+        if (authData.user.identities && authData.user.identities.length === 0) {
+          setError('Email already registered. Please sign in.');
+          setLoading(false);
+          return;
+        }
+
+        // Create profile manually
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: authData.user.email!,
+            full_name: fullName,
+          });
+
+        if (profileError && profileError.code !== '23505') {
+          // Ignore duplicate key errors (23505)
+          console.error('Profile creation error:', profileError);
+        }
+
         setSuccess(true);
         setTimeout(() => {
           router.push('/dashboard');
           router.refresh();
-        }, 2000);
+        }, 1000);
       }
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account');
+      setLoading(false);
     }
   };
 
