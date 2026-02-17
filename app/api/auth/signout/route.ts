@@ -7,6 +7,6 @@ export async function POST(request: Request) {
   // Sign out the user
   await supabase.auth.signOut();
 
-  // Redirect to login page
-  return NextResponse.redirect(new URL('/login', request.url));
+  // Redirect to login page (303 to switch from POST to GET)
+  return NextResponse.redirect(new URL('/login', request.url), 303);
 }
